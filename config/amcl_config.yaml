@@ -1,0 +1,61 @@
+amcl:
+  # Main configuration section for AMCL's communication with other ROS2 nodes
+  ros__parameters:
+    use_sim_time: True  # Use simulated time instead of system time, useful for simulations
+    base_frame_id: "base_link_projected"  # Frame ID for the base of the robot
+    global_frame_id: "map"  # Global reference frame for localization
+    odom_frame_id: "odom"  # Frame ID for odometry data
+    scan_topic: scan  # Topic name for receiving laser scan data
+    tf_broadcast: true  # Broadcast transform from "map" to "odom" frame
+    transform_tolerance: 1.0  # Allowed delay (in seconds) to receive transforms between frames
+    save_pose_rate: 0.5  # Frequency (Hz) for saving the robot's pose in case of relocalization
+
+    # Initial pose estimation for the robot on startup
+    set_initial_pose: True  # Set an initial pose for localization
+    initial_pose:
+      x: 0.0  # Initial x position of the robot in the map frame
+      y: 0.0  # Initial y position of the robot in the map frame
+      z: 0.0  # Initial z position, usually 0 in 2D space
+      yaw: 0.0  # Initial orientation (yaw angle) of the robot
+
+    # Motion model configuration for odometry (handles movement noise parameters)
+    robot_model_type: "nav2_amcl::OmniMotionModel"  # Robot type, "OmniMotionModel" for omnidirectional; could also use "DifferentialMotionModel" for differential drive
+    alpha1: 0.2  # Rotational noise from rotational commands
+    alpha2: 0.2  # Rotational noise from translational commands
+    alpha3: 0.2  # Translational noise from translational commands
+    alpha4: 0.2  # Translational noise from rotational commands
+    alpha5: 0.2  # Lateral noise for side-to-side movement, specific to omnidirectional robots
+
+    # Laser model configuration (defines how the laser readings are interpreted)
+    laser_model_type: "likelihood_field"  # Model type for interpreting laser data, "likelihood_field" works well for complex environments
+    beam_skip_distance: 0.5  # Maximum distance for skipping beams during laser scan, relevant in complex environments with obstacles
+    beam_skip_error_threshold: 0.9  # Error threshold for skipping beams, high value minimizes false matches
+    beam_skip_threshold: 0.3  # Ratio of beams that need to be valid before skipping is applied
+    do_beamskip: false  # Disable beam skipping by default; set to true for noisy environments
+    lambda_short: 0.1  # Weight for short readings (caused by obstacles close to the robot)
+    laser_likelihood_max_dist: 2.0  # Maximum distance for likelihood field computation, optimizing laser accuracy
+    laser_max_range: 100.0  # Maximum distance the laser can measure (in meters)
+    laser_min_range: -1.0  # Minimum range for laser measurement; -1 disables the minimum range check
+    max_beams: 60  # Number of beams used from the laser scan for localization
+
+    # Particle filter settings
+    pf_err: 0.05  # Error threshold for particle filter convergence
+    pf_z: 0.99  # Minimum likelihood threshold for particle filter resampling
+
+    # Gaussian noise parameters for laser model
+    sigma_hit: 0.2  # Standard deviation of Gaussian noise for matching beams to the map
+    z_hit: 0.5  # Probability of a hit for each beam (matched beam with map)
+    z_max: 0.05  # Probability of the laser reaching max range without hitting an obstacle
+    z_rand: 0.5  # Probability of random measurement noise
+    z_short: 0.05  # Probability of a short measurement due to unexpected obstacles
+
+    # Resampling algorithm settings for the particle filter
+    resample_interval: 1  # Resample particles every cycle (1) to maintain high localization accuracy
+    max_particles: 8000  # Maximum particles allowed, higher number improves accuracy but demands more computation
+    min_particles: 2000  # Minimum particles to maintain, helps optimize performance during stable localization
+    recovery_alpha_fast: 0.0  # Fast recovery rate; 0.0 disables fast recovery
+    recovery_alpha_slow: 0.0  # Slow recovery rate; 0.0 disables slow recovery
+
+    # Motion thresholds for update triggers
+    update_min_a: 0.2  # Minimum rotation (in radians) before AMCL updates the particle filter, helps filter out noise from small rotations
+    update_min_d: 0.25  # Minimum translation (in meters) before AMCL updates the particle filter, useful to avoid constant updates for small movements
