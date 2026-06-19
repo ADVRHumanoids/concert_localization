@@ -64,7 +64,7 @@ def generate_launch_description():
     # 2. Launch base estimation odometry
     odom_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(odom_share_dir, 'concert_odometry.launch.py'),
+            os.path.join(odom_share_dir, 'launch', 'concert_odometry.launch.py'),
         ),
         launch_arguments={'use_sim_time': LaunchConfiguration('use_sim_time')}.items()
     )
@@ -238,7 +238,7 @@ def generate_launch_description():
             'save_on_shutdown': True
         }],
         remappings=[
-            ('input', '/cloud_map')       # Remap the input point cloud topic to '/cloud_in'
+            ('input', '/cloud_obstacles')       # Remap the input point cloud topic to '/cloud_in'
         ],
         output='screen'
     )

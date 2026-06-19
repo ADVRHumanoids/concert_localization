@@ -113,7 +113,7 @@ def generate_launch_description():
     # 7. Launch global localization request to service
     global_localization_request = TimerAction(
         condition=IfCondition(LaunchConfiguration('auto_localize')),
-        period=5.0,
+        period=8.0,
         actions=[
             ExecuteProcess(
                 cmd=[

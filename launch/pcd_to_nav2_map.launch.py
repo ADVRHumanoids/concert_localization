@@ -115,7 +115,7 @@ def generate_launch_description():
 
     min_z_arg = DeclareLaunchArgument(
         'min_z',
-        default_value='0.10',
+        default_value='-0.50',
         description='Minimum height [m] to keep from the pointcloud.'
     )
 
