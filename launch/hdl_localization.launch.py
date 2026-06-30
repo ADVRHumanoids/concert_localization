@@ -14,6 +14,7 @@ from launch.actions import (
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition
+from launch_ros.actions import Node
 
 
 import os
@@ -66,6 +67,30 @@ def generate_launch_description():
         ),
         launch_arguments={'use_sim_time': LaunchConfiguration('use_sim_time')}.items()
     )
+    
+    # 3a. Lidar to scan topic
+    pointcloud_to_laserscan = Node(
+            package='pointcloud_to_laserscan',
+            executable='pointcloud_to_laserscan_node',
+            remappings=[
+                ('cloud_in', '/merged_cloud')
+            ],
+            parameters=[{
+                'target_frame': 'VLP16_lidar_back_base_link',
+                'transform_tolerance': 0.01,
+                'min_height': -0.5,  # Expanding to cover a larger vertical range
+                'max_height': 3.0,   # Adjust as necessary based on sensor position
+                'angle_min': -3.1416,  # Full 360-degree scan
+                'angle_max': 3.1416,
+                'angle_increment': 0.007,  # Higher resolution
+                'scan_time': 0.05,        # Adjusted for 20 Hz rate
+                'range_min': 0.7,  # Reduce to capture closer points if necessary
+                'range_max': 10.0, # Extend if you need more distant points
+                'use_inf': True,
+                'inf_epsilon': 1.0
+            }],
+            name='pointcloud_to_laserscan_front'
+        )
 
     # 4. Load map as pointcloud to visualize in RViz
     map_pcd_launch = IncludeLaunchDescription(
@@ -137,6 +162,7 @@ def generate_launch_description():
             auto_localize_arg,
             odom_launch,
             merge_pointcloud_launch,
+            pointcloud_to_laserscan,
             map_pcd_launch,
             hdl_localization_launch,
             global_localization_engine,
