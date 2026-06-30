@@ -3,7 +3,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node 
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -12,10 +12,16 @@ def generate_launch_description():
         "use_sim_time",
         default_value="true"
     )
-    
-    map_name_arg = DeclareLaunchArgument(
-        "map_name",
-        default_value="map_test"
+
+    map_file_arg = DeclareLaunchArgument(
+        "map_file",
+        default_value=PathJoinSubstitution([
+            get_package_share_directory("concert_mapping"),
+            "maps",
+            "robot_area.yaml"
+        ]),
+        description="Absolute path to the map .yaml loaded by map_server. "
+                    "Override with map_file:=/abs/path/to/map.yaml"
     )
 
     amcl_config_arg = DeclareLaunchArgument(
@@ -28,18 +34,13 @@ def generate_launch_description():
     )
 
 
-    map_name = LaunchConfiguration("map_name")
     use_sim_time = LaunchConfiguration("use_sim_time")
     amcl_config = LaunchConfiguration("amcl_config")
     lifecycle_nodes = ["map_server", "amcl"]
 
-
-    map_path = PathJoinSubstitution([
-        get_package_share_directory("concert_mapping"), 
-        "maps",
-        map_name, #map_test
-        "myworld.yaml" #not already exists in the package concert_mapping
-    ])
+    # Map yaml for map_server: from the map_file argument (defaults to
+    # concert_mapping/maps/robot_area.yaml), overridable on the command line.
+    map_path = LaunchConfiguration("map_file")
 
 
     nav2_map_server = Node(
@@ -78,7 +79,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         use_sim_time_arg,
-        map_name_arg,
+        map_file_arg,
         amcl_config_arg,
         nav2_map_server,
         nav2_amcl,
