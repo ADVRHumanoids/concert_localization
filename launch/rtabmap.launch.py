@@ -153,7 +153,10 @@ def generate_launch_description():
             'Icp/MaxCorrespondenceDistance': '1',
             'Icp/Strategy': '1',
             'Icp/OutlierRatio': '0.7',
-            'Icp/CorrespondenceRatio': '0.2'
+            'Icp/CorrespondenceRatio': '0.2',
+            # Parameters for RTAB-Map's internal ground detection
+            'Grid/MaxGroundHeight': '0.2',
+            'Grid/NormalsSegmentation': 'true',
         }],
         remappings=[
             ('scan_cloud', 'odom_filtered_input_scan')

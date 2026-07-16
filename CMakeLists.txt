@@ -7,6 +7,10 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rtabmap_ros REQUIRED)
+find_package(rtabmap_odom REQUIRED)
+find_package(octomap_server REQUIRED) # Needed for PCD->Nav2 map conversion
+find_package(perception_utils_ros2 REQUIRED)
 
 install(DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}

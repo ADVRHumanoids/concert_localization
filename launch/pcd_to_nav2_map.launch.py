@@ -10,11 +10,13 @@ ros2 launch your_package pcd_to_nav2_map.launch.py \
   output_name:=nav_map \
   min_z:=0.10 \
   max_z:=1.50 \
-  resolution:=0.05
+  resolution:=0.05 \
+  save_cropped_pcd:=true
 
 Output:
 ./maps/<output_name>/<output_name>.yaml
 ./maps/<output_name>/<output_name>.pgm
+./maps/<output_name>/<output_name>_cropped_<timestamp>.pcd  (if save_cropped_pcd:=true)
 """
 
 import os
@@ -43,6 +45,8 @@ def create_output_and_save_action(context, *args, **kwargs):
     map_file = LaunchConfiguration('map_file').perform(context)
     output_name = LaunchConfiguration('output_name').perform(context)
     save_delay = LaunchConfiguration('save_delay').perform(context)
+    save_cropped_pcd = LaunchConfiguration('save_cropped_pcd').perform(context).lower() == 'true'
+    cropped_pcd_prefix = LaunchConfiguration('cropped_pcd_prefix').perform(context)
 
     if output_name == '':
         output_name = os.path.splitext(os.path.basename(map_file))[0]
@@ -90,10 +94,41 @@ def create_output_and_save_action(context, *args, **kwargs):
         ],
     )
 
-    return [
+    actions = [
         save_map,
         LogInfo(msg=f"Created output folder: {output_dir}"),
     ]
+
+    if save_cropped_pcd:
+        if cropped_pcd_prefix == '':
+            cropped_pcd_prefix = os.path.join(output_dir, f"{output_name}_cropped_")
+
+        actions.append(
+            LogInfo(
+                msg=f"Saving height-cropped octomap pointcloud to: {cropped_pcd_prefix}<timestamp>.pcd"
+            )
+        )
+        actions.append(
+            Node(
+                package='perception_utils_ros2',
+                executable='pointcloud_to_pcd_node',
+                name='cropped_pcd_saver',
+                parameters=[{
+                    'prefix': cropped_pcd_prefix,
+                    'binary': False,
+                    'compressed': False,
+                    'rgb': False,
+                    'save_timer_sec': float(save_delay),
+                    'save_on_shutdown': True,
+                }],
+                remappings=[
+                    ('input', '/octomap_point_cloud_centers'),
+                ],
+                output='screen',
+            )
+        )
+
+    return actions
 
 
 def generate_launch_description():
@@ -135,6 +170,20 @@ def generate_launch_description():
         'save_delay',
         default_value='5.0',
         description='Seconds to wait before calling map_saver_cli.'
+    )
+
+    save_cropped_pcd_arg = DeclareLaunchArgument(
+        'save_cropped_pcd',
+        default_value='false',
+        description='If true, also save the height-filtered octomap pointcloud '
+                     '(/octomap_point_cloud_centers) as a new PCD file.'
+    )
+
+    cropped_pcd_prefix_arg = DeclareLaunchArgument(
+        'cropped_pcd_prefix',
+        default_value='',
+        description='Prefix for the cropped PCD output file. If empty, defaults to '
+                     '<output_dir>/<output_name>_cropped_. Only used when save_cropped_pcd is true.'
     )
 
     ##################################################################
@@ -199,6 +248,8 @@ def generate_launch_description():
         max_z_arg,
         resolution_arg,
         save_delay_arg,
+        save_cropped_pcd_arg,
+        cropped_pcd_prefix_arg,
 
         map_pcd_launch,
         TimerAction(
