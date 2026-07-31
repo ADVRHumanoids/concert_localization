@@ -97,14 +97,14 @@ def generate_launch_description():
             # RTAB-Map's internal parameters are strings:
             'Icp/PointToPlane': 'true',
             'Icp/Iterations': '10',
-            'Icp/VoxelSize': '0.1',
+            'Icp/VoxelSize': '0.05',
             'Icp/Epsilon': '0.001',
             'Icp/PointToPlaneK': '20',
-            'Icp/PointToPlaneRadius': '0',
-            'Icp/MaxTranslation': '2',
-            'Icp/MaxCorrespondenceDistance': '1',
+            # 'Icp/PointToPlaneRadius': '0.2',
+            'Icp/MaxTranslation': '0.2',
+            'Icp/MaxCorrespondenceDistance': '0.2',
             'Icp/Strategy': '1',
-            'Icp/OutlierRatio': '0.7',
+            'Icp/OutlierRatio': '0.2',
             'Icp/CorrespondenceRatio': '0.01',
             'Odom/ScanKeyFrameThr': '0.4',
             'OdomF2M/ScanSubtractRadius': '0.1',
@@ -142,21 +142,25 @@ def generate_launch_description():
             'Mem/NotLinkedNodesKept': 'false',
             'Mem/STMSize': '30',
             'Mem/LaserScanNormalK': '20',
+            'Mem/LaserScanVoxelSize': '0.0',
             'Reg/Strategy': '1',
-            'Icp/VoxelSize': '0.1',
+            'Icp/VoxelSize': '0.02',
             'Icp/PointToPlaneK': '20',
-            'Icp/PointToPlaneRadius': '0',
+            # 'Icp/PointToPlaneRadius': '0.2',
             'Icp/PointToPlane': 'true',
             'Icp/Iterations': '10',
             'Icp/Epsilon': '0.001',
-            'Icp/MaxTranslation': '3',
-            'Icp/MaxCorrespondenceDistance': '1',
+            'Icp/MaxTranslation': '0.2',
+            'Icp/MaxCorrespondenceDistance': '0.2',
             'Icp/Strategy': '1',
-            'Icp/OutlierRatio': '0.7',
+            'Icp/OutlierRatio': '0.2',
             'Icp/CorrespondenceRatio': '0.2',
             # Parameters for RTAB-Map's internal ground detection
-            'Grid/MaxGroundHeight': '0.2',
+            'Grid/MaxGroundHeight': '0.0',
             'Grid/NormalsSegmentation': 'true',
+            'Grid/PreVoxelFiltering': 'false',
+            'Grid/MapFrameProjection': 'true',
+            'Grid/Sensor': '0',
         }],
         remappings=[
             ('scan_cloud', 'odom_filtered_input_scan')
@@ -241,7 +245,7 @@ def generate_launch_description():
             'save_on_shutdown': True
         }],
         remappings=[
-            ('input', '/cloud_obstacles')       # Remap the input point cloud topic to '/cloud_in'
+            ('input', '/cloud_map')       # Remap the input point cloud topic to '/cloud_in'
         ],
         output='screen'
     )
