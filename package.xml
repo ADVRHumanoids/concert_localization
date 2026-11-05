@@ -18,6 +18,11 @@
   <exec_depend>octomap_server</exec_depend>
   <exec_depend>perception_utils_ros2</exec_depend>
    
+  <exec_depend>lio_mapping</exec_depend>
+  <exec_depend>fast_lio</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

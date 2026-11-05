@@ -1,7 +1,7 @@
 # concert_localization
 
 Localization and mapping-support launch files for the Concert robot: PCD-to-Nav2-map
-conversion, RTAB-Map/HDL-based global localization, AMCL-based localization, and a
+conversion, FAST-LIO/HDL-based global localization, RTAB-Map, AMCL-based localization, and a
 local EKF-based state estimator.
 
 ## Launch files
@@ -44,6 +44,49 @@ Output:
 Note: the cropped PCD is derived from the Octomap's occupied-voxel centers, so it is
 voxelized at `resolution` and reflects occupied cells rather than a lossless crop of
 the original input points.
+
+### `fast_lio_localization.launch.py`
+
+Runs FAST-LIO localization against an optimized map and converts its IMU pose to
+base-frame odometry with `lio_mapping/fast_lio_odom_bridge`.
+
+```bash
+ros2 launch concert_localization fast_lio_localization.launch.py \
+  map_dir:=/absolute/path/to/optimized-map use_sim_time:=true
+```
+
+| Argument | Default | Description |
+|---|---|---|
+| `map_dir` | required | Optimized map directory containing `map.pcd`, `poses.csv` and keyframes |
+| `use_sim_time` | `false` | Use the simulation clock |
+| `imu_topic` | `/xbotcore/imu/vectornav_imu_link` | IMU stream; the Gazebo benchmark overrides this with `/concert/lio_imu` after simulation startup conditioning |
+| `fast_lio_config` | `config/fast_lio_localization.yaml` | FAST-LIO sensor/frame parameters |
+| `bridge_config` | `config/fast_lio_odom_bridge.yaml` | IMU-to-base odometry bridge parameters |
+
+This launch starts only FAST-LIO, its base-odometry bridge, and the saved PCD
+publisher. There are no readiness scripts, timers, robot bringup or navigation
+nodes. The default configuration consumes `/concert/lio_points` in `VLP16_lidar_front`
+and `/xbotcore/imu/vectornav_imu_link`. In simulation, `concert_lio_input` pairs
+front and rear snapshots by exact timestamp, transforms the rear into the front
+frame using the rigid sensor mount TF, and adds FAST-LIO timestamp fields.
+FAST-LIO applies the front-lidar-to-IMU extrinsics once. The separate pointcloud
+merger is not started by this localization launch. Supply sensor TF and `/clock`
+in simulation; the benchmark overrides the IMU topic with `/concert/lio_imu`.
+
+**`base_estimation` is neither necessary nor started or used by this FAST-LIO
+localization path.** Lidar and IMU provide motion estimation. The bridge reads the
+robot's mounting TF, applies `IMU → base_link`, and publishes
+`/localization/base_odometry` and `odom → base_link`; FAST-LIO publishes
+`map → odom` and `odom → lio_imu`. Do not also publish wheel-odometry TF for the
+same base. XBot/robot-state publication is still required for sensor mounting TF.
+This statement applies to FAST-LIO; the existing HDL/RTAB-Map paths retain their
+own odometry setup.
+
+The map is displayed on `/map_pcd` in `map` without transforming its coordinates.
+Use a Nav2 occupancy YAML projected from this same PCD, rather than assuming a
+Gazebo-world occupancy map has the same origin. The package declares runtime
+dependencies on `lio_mapping` and `fast_lio`. Build/source those packages before
+running this launch. The launch itself does not start Gazebo, RViz, Nav2 or Jeff.
 
 ### `hdl_localization.launch.py`
 
@@ -105,5 +148,13 @@ republisher.
 
 ## Config
 
-- `config/amcl_config.yaml` — AMCL parameters used by `localization.launch.py`
+- `config/amcl_config.yaml` — AMCL parameters used by `amcl_localization.launch.py`
 - `config/ekf.yaml` — EKF parameters used by `ekf_localization.launch.py`
+
+- `config/fast_lio_localization.yaml` — Concert front-lidar FAST-LIO localization settings
+- `config/fast_lio_odom_bridge.yaml` — base odometry from the actual IMU mounting TF
+
+The simulation adapter defaults to front lidar only (`use_rear_lidar:=false`).
+Set `use_rear_lidar:=true` on simulation or combined navigation bringup to pair
+both snapshots and merge rear points into the front frame. Restart bringup to
+change this setting; localization uses the same front-to-IMU extrinsics in both modes.

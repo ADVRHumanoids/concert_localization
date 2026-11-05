@@ -1,0 +1,89 @@
+# FAST-LIO2 for CONCERT in Gazebo: both VLP-16s merged in base_link by perception_utils_ros2's
+# pointcloud_merger (/merged_cloud) and vectornav_imu_link (/xbotcore/imu/vectornav_imu_link,
+# 100 Hz, m/s^2), on the sim clock.
+# Topics are set by launch/bag.launch.py. Voxel map and noise: from fast_lio_velodyne_narrowwide.yaml.
+/**:
+  ros__parameters:
+    point_filter_num: 2
+    max_iteration: 4
+    num_threads: 4
+    filter_size_surf: 0.5
+    map_file_path: ""
+
+    frames:
+      odom: "odom"
+      body: "body"
+      map: "map"
+
+    common:
+      time_offset_lidar_to_imu: 0.0
+      gravity_align: true             # world z up; needed by slam/localization
+      deskew: false                   # gz clouds are captured at one instant
+      lid_topic: /merged_cloud
+      imu_topic: /xbotcore/imu/vectornav_imu_link
+      gravity_align: true
+      time_sync_en: false
+      time_offset_lidar_to_imu: 0.0
+
+    preprocess:
+      # Hesai: per-point time from field `timestamp`. The merged cloud has none, so every point is
+      # at the stamp, as gz captures it; non-finite points (gz no-returns) are dropped. Velodyne (2)
+      # would derive times per ring from the azimuth, which wraps past the scan period with two
+      # lidars on the same rings; Ouster (3) keeps non-finite points.
+      lidar_type: 5
+      blind: 0.5                      # m from base_link; gz returns nothing of the robot itself
+
+    mapping:
+      acc_cov: 0.1
+      gyr_cov: 0.1
+      b_acc_cov: 0.0001
+      b_gyr_cov: 0.0001
+      extrinsic_est_en: false
+      
+      # Extrinsic from the front lidar's frame (VLP16_lidar_front) in vectornav_imu_link, from the robot description TF.
+      # extrinsic_T: [0.975, -0.316, 0.100]
+      # extrinsic_R: [0.0, 1.0, 0.0,
+      #               -1.0, 0.0, 0.0,
+      #               0.0, 0.0, 1.0]
+
+      # Extrinsic from base_link (the merged cloud's frame) iin vectornav_imu_link, from the robot description TF.
+      extrinsic_T: [0.444, -0.001, 0.0]
+      extrinsic_R: [1.0, 0.0, 0.0,
+                    0.0, -1.0, 0.0,
+                    0.0, 0.0, -1.0]
+      voxel_map:
+        size: 0.5
+        layers: 3
+        planar_threshold: 0.01
+        max_points: 100
+        candidates: 64
+      point_noise:
+        range_std: 0.04
+        bearing_std_deg: 0.2
+      adaptive_voxel:
+        enable: true
+      point_to_point:
+        enable: true
+        std: 0.2
+
+    publish:
+      path_en: false
+      effect_map_en: false
+      map_en: false
+      scan_publish_en: false
+      dense_publish_en: false
+      scan_bodyframe_pub_en: false
+
+    slam:
+      elevation_cloud: false
+
+    localization:
+      use_last_pose: false            # always the search without a guess
+      sc_candidates: 30               # the near-square room: propose both headings
+      # The room turned 180 deg about its centre fits the walls almost as well (rival ~83%). Scored
+      # at 0.2 m within 0.1 m, the true pose keeps ~90% inliers and the turned one no longer
+      # counts as a rival.
+      registration:
+        voxels: [1.0, 0.2]            # the last: the scoring resolution
+      inlier_distance: 0.1
+      confident_coverage: 0.85        # the base hides one of the 8 sectors from both lidars

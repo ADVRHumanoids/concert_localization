@@ -1,0 +1,10 @@
+# fast_lio_odom_bridge for CONCERT in Gazebo.
+/localization/fast_lio_odom_bridge:
+  ros__parameters:
+    odom_topic: "odometry"
+    imu_topic: "/xbotcore/imu/vectornav_imu_link"
+    imu_frame: "vectornav_imu_link"
+    odom_frame: "odom"
+    world_is_odom: true
+    fast_lio_frame: ""
+    base_frame: ""                         # empty: root of the robot TF tree (base_link)
