@@ -86,7 +86,7 @@ Notes:
 - The exported `.pcd` is only written on node shutdown (`save_timer_sec: 0.0`), so the
   launch must be stopped (e.g. `Ctrl+C`) for the file to be saved.
 
-### `localization.launch.py`
+### `amcl_localization.launch.py`
 
 AMCL-based localization against a saved Nav2 map: starts `nav2_map_server`, `nav2_amcl`
 (configured via `config/amcl_config.yaml`), and the associated lifecycle manager.
@@ -97,7 +97,7 @@ AMCL-based localization against a saved Nav2 map: starts `nav2_map_server`, `nav
 | `map_file` | `concert_mapping/maps/robot_area.yaml` | Map yaml loaded by `map_server` |
 | `amcl_config` | `config/amcl_config.yaml` | AMCL parameters |
 
-### `local_localization.launch.py`
+### `ekf_localization.launch.py`
 
 Local state estimation: a static transform (`base_footprint_ekf` -> `imu_link_ekf`),
 `robot_localization`'s EKF node (configured via `config/ekf.yaml`), and an IMU
@@ -106,4 +106,4 @@ republisher.
 ## Config
 
 - `config/amcl_config.yaml` — AMCL parameters used by `localization.launch.py`
-- `config/ekf.yaml` — EKF parameters used by `local_localization.launch.py`
+- `config/ekf.yaml` — EKF parameters used by `ekf_localization.launch.py`
